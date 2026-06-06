@@ -1,2 +1,8 @@
-# pigreferences
-This repository contains things I've learned while working on personal development projects.
+# ブタの開発日記です
+
+## **技術的なメモとか日記を記録しています。**
+
+---
+
+正直ほとんど皆さんのレベルからすると赤ちゃんレベルなので、
+読む意味はないです`(*'ω'*)`
