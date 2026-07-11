@@ -38,8 +38,8 @@ Square 掲示板機能モジュール
 - square // 文書データ（内部にリスクスコア、および親文書キー `parent_id` を保持）  
 - square_likes // いいねデータ（user_id × square_id）  
 - square_reports // 通報データ  
-- tags // タグテーブル  
-- square_tags // 掲示板_タグ中間テーブル  
+<!-- - tags // タグテーブル  
+- square_tags // 掲示板_タグ中間テーブル   -->
 - square_logs // ログテーブル（通報・モデレーション等の履歴）  
 
 # ■ モジュール概要  

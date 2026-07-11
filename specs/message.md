@@ -94,10 +94,11 @@
 # ■ 関連テーブル一覧
 
 * messages // メッセージデータそのもの
-* message_rooms // トークルーム情報
-* message_reads // 管理者通知を１本にしたいので、既読未読管理用に追加する。
+* message_contacts // 通信確立情報。ユーザーの申請、承認、拒否管理
+* announcement_reads // 管理者通知を１本にしたいので、既読未読管理用に追加する。
 　　　　　　　　　　なお、パーティ通知なども管理可能とする。
-* message_contacts // ユーザーの申請、承認、拒否管理
+* announcements //　お知らせ機能
+
 
 # ■ モジュール概要
 
@@ -107,3 +108,92 @@
 * システム通知・ユーザー通知を同一モジュールで管理する。
 * パーティチャット・ギルドチャットとは独立したモジュールとする。
 * リアルタイム更新を前提とする。
+
+
+-- ===========================================
+-- メッセージ通信管理
+-- ===========================================
+CREATE TABLE message_contacts (
+
+    id                  BIGSERIAL PRIMARY KEY,     -- 通信ID
+
+    requester_id        UUID NOT NULL,             -- メッセージ送信を申請したユーザー
+    receiver_id         UUID NOT NULL,             -- 申請を受けたユーザー
+
+    status              SMALLINT NOT NULL,         -- 0:申請中 1:承認 2:拒否
+
+    requested_at        TIMESTAMP NOT NULL,        -- 申請日時
+    approved_at         TIMESTAMP,                 -- 承認日時
+    rejected_at         TIMESTAMP,                 -- 拒否日時
+
+    created_at          TIMESTAMP NOT NULL,
+    updated_at          TIMESTAMP NOT NULL
+
+);
+-- ===========================================
+-- メッセージ
+-- ===========================================
+CREATE TABLE messages (
+
+    id                  BIGSERIAL PRIMARY KEY,     -- メッセージID
+
+    contact_id          BIGINT NOT NULL,           -- 通信ID（message_contacts.id）
+
+    sender_id           UUID NOT NULL,             -- 送信者
+
+    message_type        SMALLINT NOT NULL,         -- 0:テキスト 1:絵文字 2:システム通知
+
+    content             TEXT NOT NULL,             -- メッセージ内容
+
+    is_deleted          BOOLEAN NOT NULL DEFAULT FALSE, -- 送信取消・論理削除
+
+    created_at          TIMESTAMP NOT NULL,
+    updated_at          TIMESTAMP NOT NULL
+
+);
+-- ===========================================
+-- 全体お知らせ
+-- ===========================================
+CREATE TABLE announcements (
+
+    id                  BIGSERIAL PRIMARY KEY,     -- お知らせID
+
+    title               VARCHAR(200) NOT NULL,     -- タイトル
+
+    content             TEXT NOT NULL,             -- お知らせ本文
+
+    published_at        TIMESTAMP NOT NULL,        -- 公開日時
+
+    created_at          TIMESTAMP NOT NULL,
+    updated_at          TIMESTAMP NOT NULL
+
+);
+-- ===========================================
+-- お知らせ既読管理
+-- ===========================================
+CREATE TABLE announcement_reads (
+
+    announcement_id     BIGINT NOT NULL,           -- お知らせID
+
+    adventure_id        UUID NOT NULL,             -- 閲覧ユーザー
+
+    read_at             TIMESTAMP NOT NULL,        -- 既読日時
+
+    PRIMARY KEY (
+        announcement_id,
+        adventure_id
+    )
+
+);
+👍 私ならさらにこうします
+
+message_contacts の status は将来を考えて少し余裕を持たせます。
+
+0 : PENDING（申請中）
+1 : APPROVED（承認）
+2 : REJECTED（拒否）
+3 : BLOCKED（ブロック）
+
+そうすると 「承認解除」や「ブロック」 の機能を後から追加してもテーブルを増やさずに済みます。
+
+あと、messages.sender_id は NULL を許可しないままで問題ありません。システム通知は「SYSTEM」という専用ユーザー（または運営ユーザー）を1件用意して送信者として扱う設計にすると、DMとシステム通知を同じロジックで扱えるので実装がシンプルになります。
